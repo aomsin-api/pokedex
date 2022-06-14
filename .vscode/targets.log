@@ -7,7 +7,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 
 # This program built for i386-apple-darwin11.3.0
 
-# Make data base, printed on Tue Jun 14 15:44:09 2022
+# Make data base, printed on Tue Jun 14 18:22:28 2022
 
 # Variables
 
@@ -40,7 +40,7 @@ VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/kb/lrtxh88147z702bfl5wc7pk40000gn/T/vscode-ipc-b40f99b2-a334-4553-9ae4-b6a0964ab6e0.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/kb/lrtxh88147z702bfl5wc7pk40000gn/T/vscode-ipc-b080c32a-39d6-43e3-9f5a-2bed1259583e.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -96,7 +96,7 @@ MAKE_VERSION := 3.81
 # environment
 USER = aomsininininin
 # makefile
-.DEFAULT_GOAL := run
+.DEFAULT_GOAL := gen
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # default
@@ -154,9 +154,9 @@ VSCODE_PID = 351
 
 # Directories
 
-# . (device 16777222, inode 1588938): 13 files, no impossibilities.
+# . (device 16777222, inode 1588938): 14 files, no impossibilities.
 
-# 13 files, no impossibilities in 1 directories.
+# 14 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -179,10 +179,19 @@ all:
 #  Modification time never checked.
 #  File has not been updated.
 
+gen:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `makefile', line 2):
+	go get github.com/99designs/gqlgen@v0.17.10
+	go run github.com/99designs/gqlgen generate
+	
+
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-14 14:56:39
+#  Last modified 2022-06-14 15:45:27
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -198,13 +207,12 @@ run:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `makefile', line 2):
-	go get github.com/99designs/gqlgen@v0.17.10
-	go run github.com/99designs/gqlgen generate
+#  commands to execute (from `makefile', line 7):
+	go run main.go
 	
 
 # files hash-table stats:
-# Load=5/1024=0%, Rehash=0, Collisions=0/17=0%
+# Load=6/1024=1%, Rehash=0, Collisions=0/18=0%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -216,7 +224,7 @@ run:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Tue Jun 14 15:44:09 2022
+# Finished Make data base on Tue Jun 14 18:22:28 2022
 
  
 make: *** No rule to make target `all'.  Stop.

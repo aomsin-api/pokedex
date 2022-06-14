@@ -1,4 +1,4 @@
-package graph
+package database
 
 import (
 	"context"
@@ -8,15 +8,13 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/uptrace/bun/extra/bundebug"
-
-	"pokedex/graph/model"
 )
 
 type PokedexOp struct {
 	db *bun.DB
 }
 
-func Reset() {
+func PokedexInit() {
 	ctx := context.Background()
 
 	sqldb, err := sql.Open(sqliteshim.ShimName, "pokedex.db")
@@ -31,23 +29,21 @@ func Reset() {
 		bundebug.FromEnv("BUNDEBUG"),
 	))
 
-	if err := ResetSchema(ctx, db); err != nil {
+	if err := SetSchema(ctx, db); err != nil {
 		panic(err)
 	}
 }
 
-func ResetSchema(ctx context.Context, db *bun.DB) error {
-	if err := db.ResetModel(ctx, (*model.Pokemon)(nil)); err != nil {
+func SetSchema(ctx context.Context, db *bun.DB) error {
+	if err := db.ResetModel(ctx, (*Pokemon)(nil)); err != nil {
 		return err
 	}
-	firstpokemon := []model.Pokemon{
-		{
-			Name:        "Charmander",
-			Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
-			Category:    "Lizard",
-			Abilities:   []string{"Blaze", "Flamethrower"},
-			Type:        []string{"Fire", "Normal"},
-		},
+	firstpokemon := Pokemon{
+		Name:        "Charmander",
+		Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
+		Category:    "Lizard",
+		Abilities:   []string{"Blaze", "Flamethrower"},
+		Type:        []string{"Fire", "Normal"},
 	}
 
 	if _, err := db.NewInsert().Model(&firstpokemon).Exec(ctx); err != nil {
@@ -57,22 +53,22 @@ func ResetSchema(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (op *PokedexOp) CreatePokemon(ctx context.Context, input *model.PokemonInput) (*model.Pokemon, error) {
-	newPokemon := model.Pokemon{
+func (op *PokedexOp) CreatePokemon(ctx context.Context, input *CreatePokemonInput) (*Pokemon, error) {
+	newPokemon := Pokemon{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    input.Category,
 		Abilities:   input.Abilities,
 		Type:        input.Type,
 	}
-	if _, err := op.db.NewInsert().Model(&newPokemon).Exec(ctx); err != nil {
+	if _, err := op.db.NewInsert().Model(newPokemon).Exec(ctx); err != nil {
 		return nil, err
 	}
 	return &newPokemon, nil
 }
 
-func (op *PokedexOp) SearchByID(ctx context.Context, id string) (*model.Pokemon, error) {
-	pokemons := new(*model.Pokemon)
+func (op *PokedexOp) SearchByID(ctx context.Context, id string) (*Pokemon, error) {
+	pokemons := new(*Pokemon)
 	if err := op.db.NewSelect().Model(pokemons).Where("id = ? ", id).Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -80,8 +76,8 @@ func (op *PokedexOp) SearchByID(ctx context.Context, id string) (*model.Pokemon,
 	return *pokemons, nil
 }
 
-func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*model.Pokemon, error) {
-	pokemons := new(*model.Pokemon)
+func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*Pokemon, error) {
+	pokemons := new(*Pokemon)
 	if err := op.db.NewSelect().Model(pokemons).Relation("Types").Where("name LIKE ? ", name).Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -89,8 +85,8 @@ func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*model.Poke
 	return *pokemons, nil
 }
 
-func (op *PokedexOp) ListAll(ctx context.Context) ([]*model.Pokemon, error) {
-	pokemons := make([]*model.Pokemon, 0)
+func (op *PokedexOp) ListAll(ctx context.Context) ([]*Pokemon, error) {
+	pokemons := make([]*Pokemon, 0)
 	if err := op.db.NewSelect().Model(pokemons).OrderExpr("id ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -98,13 +94,20 @@ func (op *PokedexOp) ListAll(ctx context.Context) ([]*model.Pokemon, error) {
 	return pokemons, nil
 }
 
-func (op *PokedexOp) UpdatePokemon(ctx context.Context, pokemon *model.Pokemon) error {
-	_, err := op.db.NewUpdate().Model(&pokemon).WherePK().Exec(ctx)
+func (op *PokedexOp) UpdatePokemon(ctx context.Context, input *UpdatePokemonInput) (*Pokemon, error) {
+	updatePokemon := Pokemon{
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Abilities:   input.Abilities,
+		Type:        input.Type,
+	}
+	_, err := op.db.NewUpdate().Model(&updatePokemon).WherePK().Exec(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &updatePokemon, nil
 }
 
 func (op *PokedexOp) DeletePokemon(ctx context.Context, id string) error {

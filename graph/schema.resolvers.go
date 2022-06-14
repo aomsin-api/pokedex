@@ -6,38 +6,42 @@ package graph
 import (
 	"context"
 	"fmt"
+	"pokedex/database"
 	"pokedex/graph/generated"
-	"pokedex/graph/model"
+	"pokedex/graph/gqlmodel"
 )
 
-func (r *mutationResolver) CreatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
-	newPokemon, err := r.pokedex.CreatePokemon(ctx, &input)
-	if err != nil {
-		return nil, err
-	}
-
-	return newPokemon, nil
-}
-
-func (r *mutationResolver) UpdatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
-	if input.ID == nil {
-		return nil, fmt.Errorf("id must not be null")
-	}
-
-	pokemon := model.Pokemon{
+func (r *mutationResolver) CreatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error) {
+	newpokemon, err := r.pokedex.CreatePokemon(ctx, &database.CreatePokemonInput{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    input.Category,
 		Abilities:   input.Abilities,
-		Type:        input.Abilities,
-	}
-
-	err := r.pokedex.UpdatePokemon(ctx, &pokemon)
+		Type:        input.Type,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pokemon, nil
+	return newpokemon, nil
+}
+
+func (r *mutationResolver) UpdatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("id must not be null")
+	}
+	pokemon, err := r.pokedex.UpdatePokemon(ctx, &database.UpdatePokemonInput{
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Abilities:   input.Abilities,
+		Type:        input.Type,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pokemon, nil
 }
 
 func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, error) {
@@ -49,15 +53,15 @@ func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, 
 	return true, nil
 }
 
-func (r *queryResolver) Pokemonbyid(ctx context.Context, id string) (*model.Pokemon, error) {
-	return r.pokedex.SearchByID(ctx, id)
+func (r *queryResolver) SearchPokemonByID(ctx context.Context, id string) (*database.Pokemon, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Pokemonbyname(ctx context.Context, name string) (*model.Pokemon, error) {
-	return r.pokedex.SearchByName(ctx, name)
+func (r *queryResolver) SearchPokemonByName(ctx context.Context, name string) (*database.Pokemon, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Pokemons(ctx context.Context) ([]*model.Pokemon, error) {
+func (r *queryResolver) Pokemons(ctx context.Context) ([]*database.Pokemon, error) {
 	return r.pokedex.ListAll(ctx)
 }
 

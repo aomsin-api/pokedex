@@ -7,7 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pokedex/graph/model"
+	"pokedex/database"
+	"pokedex/graph/gqlmodel"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -45,9 +46,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreatePokemon func(childComplexity int, input model.PokemonInput) int
+		CreatePokemon func(childComplexity int, input gqlmodel.PokemonInput) int
 		DeletePokemon func(childComplexity int, id string) int
-		UpdatePokemon func(childComplexity int, input model.PokemonInput) int
+		UpdatePokemon func(childComplexity int, input gqlmodel.PokemonInput) int
 	}
 
 	Pokemon struct {
@@ -60,21 +61,21 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Pokemonbyid   func(childComplexity int, id string) int
-		Pokemonbyname func(childComplexity int, name string) int
-		Pokemons      func(childComplexity int) int
+		Pokemons            func(childComplexity int) int
+		SearchPokemonByID   func(childComplexity int, id string) int
+		SearchPokemonByName func(childComplexity int, name string) int
 	}
 }
 
 type MutationResolver interface {
-	CreatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error)
-	UpdatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error)
+	CreatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error)
+	UpdatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error)
 	DeletePokemon(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
-	Pokemonbyid(ctx context.Context, id string) (*model.Pokemon, error)
-	Pokemonbyname(ctx context.Context, name string) (*model.Pokemon, error)
-	Pokemons(ctx context.Context) ([]*model.Pokemon, error)
+	SearchPokemonByID(ctx context.Context, id string) (*database.Pokemon, error)
+	SearchPokemonByName(ctx context.Context, name string) (*database.Pokemon, error)
+	Pokemons(ctx context.Context) ([]*database.Pokemon, error)
 }
 
 type executableSchema struct {
@@ -102,7 +103,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreatePokemon(childComplexity, args["input"].(model.PokemonInput)), true
+		return e.complexity.Mutation.CreatePokemon(childComplexity, args["input"].(gqlmodel.PokemonInput)), true
 
 	case "Mutation.deletePokemon":
 		if e.complexity.Mutation.DeletePokemon == nil {
@@ -126,7 +127,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePokemon(childComplexity, args["input"].(model.PokemonInput)), true
+		return e.complexity.Mutation.UpdatePokemon(childComplexity, args["input"].(gqlmodel.PokemonInput)), true
 
 	case "Pokemon.abilities":
 		if e.complexity.Pokemon.Abilities == nil {
@@ -170,36 +171,36 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Pokemon.Type(childComplexity), true
 
-	case "Query.pokemonbyid":
-		if e.complexity.Query.Pokemonbyid == nil {
-			break
-		}
-
-		args, err := ec.field_Query_pokemonbyid_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Pokemonbyid(childComplexity, args["id"].(string)), true
-
-	case "Query.pokemonbyname":
-		if e.complexity.Query.Pokemonbyname == nil {
-			break
-		}
-
-		args, err := ec.field_Query_pokemonbyname_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Pokemonbyname(childComplexity, args["name"].(string)), true
-
 	case "Query.pokemons":
 		if e.complexity.Query.Pokemons == nil {
 			break
 		}
 
 		return e.complexity.Query.Pokemons(childComplexity), true
+
+	case "Query.searchPokemonById":
+		if e.complexity.Query.SearchPokemonByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchPokemonById_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchPokemonByID(childComplexity, args["id"].(string)), true
+
+	case "Query.searchPokemonByName":
+		if e.complexity.Query.SearchPokemonByName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchPokemonByName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchPokemonByName(childComplexity, args["name"].(string)), true
 
 	}
 	return 0, false
@@ -284,8 +285,8 @@ type Pokemon {
 }
 
 type Query {
-  pokemonbyid(id: ID!): Pokemon
-  pokemonbyname(name: String!): Pokemon
+  searchPokemonById(id: ID!): Pokemon
+  searchPokemonByName(name: String!): Pokemon
   pokemons: [Pokemon!]!
 }
 
@@ -313,10 +314,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createPokemon_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PokemonInput
+	var arg0 gqlmodel.PokemonInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPokemonInput2pokedexᚋgraphᚋmodelᚐPokemonInput(ctx, tmp)
+		arg0, err = ec.unmarshalNPokemonInput2pokedexᚋgraphᚋgqlmodelᚐPokemonInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -343,10 +344,10 @@ func (ec *executionContext) field_Mutation_deletePokemon_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_updatePokemon_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PokemonInput
+	var arg0 gqlmodel.PokemonInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPokemonInput2pokedexᚋgraphᚋmodelᚐPokemonInput(ctx, tmp)
+		arg0, err = ec.unmarshalNPokemonInput2pokedexᚋgraphᚋgqlmodelᚐPokemonInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -370,7 +371,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_pokemonbyid_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_searchPokemonById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -385,7 +386,7 @@ func (ec *executionContext) field_Query_pokemonbyid_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_pokemonbyname_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_searchPokemonByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -452,7 +453,7 @@ func (ec *executionContext) _Mutation_createPokemon(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreatePokemon(rctx, fc.Args["input"].(model.PokemonInput))
+		return ec.resolvers.Mutation().CreatePokemon(rctx, fc.Args["input"].(gqlmodel.PokemonInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -464,9 +465,9 @@ func (ec *executionContext) _Mutation_createPokemon(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pokemon)
+	res := resTmp.(*database.Pokemon)
 	fc.Result = res
-	return ec.marshalNPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx, field.Selections, res)
+	return ec.marshalNPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createPokemon(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -521,7 +522,7 @@ func (ec *executionContext) _Mutation_updatePokemon(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePokemon(rctx, fc.Args["input"].(model.PokemonInput))
+		return ec.resolvers.Mutation().UpdatePokemon(rctx, fc.Args["input"].(gqlmodel.PokemonInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -533,9 +534,9 @@ func (ec *executionContext) _Mutation_updatePokemon(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pokemon)
+	res := resTmp.(*database.Pokemon)
 	fc.Result = res
-	return ec.marshalNPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx, field.Selections, res)
+	return ec.marshalNPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updatePokemon(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -631,7 +632,7 @@ func (ec *executionContext) fieldContext_Mutation_deletePokemon(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_id(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_id(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -657,9 +658,9 @@ func (ec *executionContext) _Pokemon_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Pokemon_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -675,7 +676,7 @@ func (ec *executionContext) fieldContext_Pokemon_id(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_name(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_name(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -719,7 +720,7 @@ func (ec *executionContext) fieldContext_Pokemon_name(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_description(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_description(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_description(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -763,7 +764,7 @@ func (ec *executionContext) fieldContext_Pokemon_description(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_category(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_category(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_category(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -807,7 +808,7 @@ func (ec *executionContext) fieldContext_Pokemon_category(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_abilities(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_abilities(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_abilities(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -848,7 +849,7 @@ func (ec *executionContext) fieldContext_Pokemon_abilities(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Pokemon_type(ctx context.Context, field graphql.CollectedField, obj *model.Pokemon) (ret graphql.Marshaler) {
+func (ec *executionContext) _Pokemon_type(ctx context.Context, field graphql.CollectedField, obj *database.Pokemon) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pokemon_type(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -889,8 +890,8 @@ func (ec *executionContext) fieldContext_Pokemon_type(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_pokemonbyid(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_pokemonbyid(ctx, field)
+func (ec *executionContext) _Query_searchPokemonById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchPokemonById(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -903,7 +904,7 @@ func (ec *executionContext) _Query_pokemonbyid(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Pokemonbyid(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().SearchPokemonByID(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -912,12 +913,12 @@ func (ec *executionContext) _Query_pokemonbyid(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pokemon)
+	res := resTmp.(*database.Pokemon)
 	fc.Result = res
-	return ec.marshalOPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx, field.Selections, res)
+	return ec.marshalOPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_pokemonbyid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchPokemonById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -948,15 +949,15 @@ func (ec *executionContext) fieldContext_Query_pokemonbyid(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_pokemonbyid_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchPokemonById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_pokemonbyname(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_pokemonbyname(ctx, field)
+func (ec *executionContext) _Query_searchPokemonByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchPokemonByName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -969,7 +970,7 @@ func (ec *executionContext) _Query_pokemonbyname(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Pokemonbyname(rctx, fc.Args["name"].(string))
+		return ec.resolvers.Query().SearchPokemonByName(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -978,12 +979,12 @@ func (ec *executionContext) _Query_pokemonbyname(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pokemon)
+	res := resTmp.(*database.Pokemon)
 	fc.Result = res
-	return ec.marshalOPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx, field.Selections, res)
+	return ec.marshalOPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_pokemonbyname(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchPokemonByName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1014,7 +1015,7 @@ func (ec *executionContext) fieldContext_Query_pokemonbyname(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_pokemonbyname_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchPokemonByName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1047,9 +1048,9 @@ func (ec *executionContext) _Query_pokemons(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Pokemon)
+	res := resTmp.([]*database.Pokemon)
 	fc.Result = res
-	return ec.marshalNPokemon2ᚕᚖpokedexᚋgraphᚋmodelᚐPokemonᚄ(ctx, field.Selections, res)
+	return ec.marshalNPokemon2ᚕᚖpokedexᚋdatabaseᚐPokemonᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_pokemons(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2981,8 +2982,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputPokemonInput(ctx context.Context, obj interface{}) (model.PokemonInput, error) {
-	var it model.PokemonInput
+func (ec *executionContext) unmarshalInputPokemonInput(ctx context.Context, obj interface{}) (gqlmodel.PokemonInput, error) {
+	var it gqlmodel.PokemonInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -3111,7 +3112,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var pokemonImplementors = []string{"Pokemon"}
 
-func (ec *executionContext) _Pokemon(ctx context.Context, sel ast.SelectionSet, obj *model.Pokemon) graphql.Marshaler {
+func (ec *executionContext) _Pokemon(ctx context.Context, sel ast.SelectionSet, obj *database.Pokemon) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, pokemonImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -3185,7 +3186,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "pokemonbyid":
+		case "searchPokemonById":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3194,7 +3195,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_pokemonbyid(ctx, field)
+				res = ec._Query_searchPokemonById(ctx, field)
 				return res
 			}
 
@@ -3205,7 +3206,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "pokemonbyname":
+		case "searchPokemonByName":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3214,7 +3215,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_pokemonbyname(ctx, field)
+				res = ec._Query_searchPokemonByName(ctx, field)
 				return res
 			}
 
@@ -3604,6 +3605,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3619,11 +3635,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNPokemon2pokedexᚋgraphᚋmodelᚐPokemon(ctx context.Context, sel ast.SelectionSet, v model.Pokemon) graphql.Marshaler {
+func (ec *executionContext) marshalNPokemon2pokedexᚋdatabaseᚐPokemon(ctx context.Context, sel ast.SelectionSet, v database.Pokemon) graphql.Marshaler {
 	return ec._Pokemon(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPokemon2ᚕᚖpokedexᚋgraphᚋmodelᚐPokemonᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Pokemon) graphql.Marshaler {
+func (ec *executionContext) marshalNPokemon2ᚕᚖpokedexᚋdatabaseᚐPokemonᚄ(ctx context.Context, sel ast.SelectionSet, v []*database.Pokemon) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3647,7 +3663,7 @@ func (ec *executionContext) marshalNPokemon2ᚕᚖpokedexᚋgraphᚋmodelᚐPoke
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx, sel, v[i])
+			ret[i] = ec.marshalNPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3667,7 +3683,7 @@ func (ec *executionContext) marshalNPokemon2ᚕᚖpokedexᚋgraphᚋmodelᚐPoke
 	return ret
 }
 
-func (ec *executionContext) marshalNPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx context.Context, sel ast.SelectionSet, v *model.Pokemon) graphql.Marshaler {
+func (ec *executionContext) marshalNPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx context.Context, sel ast.SelectionSet, v *database.Pokemon) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3677,7 +3693,7 @@ func (ec *executionContext) marshalNPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon
 	return ec._Pokemon(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPokemonInput2pokedexᚋgraphᚋmodelᚐPokemonInput(ctx context.Context, v interface{}) (model.PokemonInput, error) {
+func (ec *executionContext) unmarshalNPokemonInput2pokedexᚋgraphᚋgqlmodelᚐPokemonInput(ctx context.Context, v interface{}) (gqlmodel.PokemonInput, error) {
 	res, err := ec.unmarshalInputPokemonInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -3992,7 +4008,7 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalOPokemon2ᚖpokedexᚋgraphᚋmodelᚐPokemon(ctx context.Context, sel ast.SelectionSet, v *model.Pokemon) graphql.Marshaler {
+func (ec *executionContext) marshalOPokemon2ᚖpokedexᚋdatabaseᚐPokemon(ctx context.Context, sel ast.SelectionSet, v *database.Pokemon) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

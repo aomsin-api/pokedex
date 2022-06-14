@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"pokedex/database"
 	"pokedex/graph"
 	"pokedex/graph/generated"
 
@@ -18,9 +19,12 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	graph.Reset()
+	database.PokedexInit()
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(
+			generated.Config{
+				Resolvers: &graph.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

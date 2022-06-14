@@ -12,8 +12,8 @@ type Pokemon {
 }
 
 type Query {
-  pokemonbyid(id: ID!): Pokemon
-  pokemonbyname(name: String!): Pokemon
+  searchPokemonById(id: ID!): Pokemon
+  searchPokemonByName(name: String!): Pokemon
   pokemons: [Pokemon!]!
 }
 
