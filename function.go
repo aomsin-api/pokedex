@@ -42,7 +42,7 @@ type Type struct {
 	Pokemons []Pokemon `bun:"m2m:pokemon_to_type,join:Type=Pokemon"`
 }
 
-func main() {
+func Set() {
 	ctx := context.Background()
 
 	sqldb, err := sql.Open(sqliteshim.ShimName, "pokedex.db")
