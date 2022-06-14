@@ -73,19 +73,20 @@ func ResetSchema(ctx context.Context, db *bun.DB) error {
 }
 
 func (op *PokedexOp) CreatePokemon(ctx context.Context, pokemon *model.Pokemon) error {
+
 	if _, err := op.db.NewInsert().Model(&pokemon).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (op *PokedexOp) SearchByID(ctx context.Context, id int) (*Pokemon, error) {
-	pokemons := new(Pokemon)
+func (op *PokedexOp) SearchByID(ctx context.Context, id string) (*model.Pokemon, error) {
+	pokemons := new(*model.Pokemon)
 	if err := op.db.NewSelect().Model(pokemons).Relation("Types").Where("id = ? ", id).Scan(ctx); err != nil {
 		return nil, err
 	}
 
-	return pokemons, nil
+	return *pokemons, nil
 }
 
 func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*Pokemon, error) {
@@ -97,8 +98,8 @@ func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*Pokemon, e
 	return pokemons, nil
 }
 
-func (op *PokedexOp) ListAll(ctx context.Context) ([]Pokemon, error) {
-	pokemons := make([]Pokemon, 0, 4)
+func (op *PokedexOp) ListAll(ctx context.Context) ([]*model.Pokemon, error) {
+	pokemons := make([]*model.Pokemon, 0, 4)
 	if err := op.db.NewSelect().Model(&pokemons).Column("name").OrderExpr("id ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (op *PokedexOp) UpdatePokemon(ctx context.Context, pokemon *model.Pokemon) 
 	return nil
 }
 
-func (op *PokedexOp) DeletePokemon(ctx context.Context, id int) error {
+func (op *PokedexOp) DeletePokemon(ctx context.Context, id string) error {
 	pokemon := new(Pokemon)
 	_, err := op.db.NewDelete().Model(pokemon).Where("id = ? ", id).Exec(ctx)
 	if err != nil {

@@ -28,19 +28,41 @@ func (r *mutationResolver) CreatePokemon(ctx context.Context, input model.Pokemo
 }
 
 func (r *mutationResolver) UpdatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
-	panic(fmt.Errorf("not implemented"))
+	if input.ID == nil {
+		return nil, fmt.Errorf("id must not be null")
+	}
+
+	pokemon := model.Pokemon{
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Abilities:   input.Abilities,
+		Type:        input.Abilities,
+	}
+
+	err := r.pokedex.UpdatePokemon(ctx, &pokemon)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pokemon, nil
 }
 
 func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	err := r.pokedex.DeletePokemon(ctx, id)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *queryResolver) Pokemon(ctx context.Context, id string) (*model.Pokemon, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.pokedex.SearchByID(ctx, id)
 }
 
 func (r *queryResolver) Pokemons(ctx context.Context) ([]*model.Pokemon, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.pokedex.ListAll(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -13,6 +13,7 @@ type Pokemon {
 
 type Query {
   pokemon(id: ID!): Pokemon
+  pokemon(name: String!): Pokemon
   pokemons: [Pokemon!]!
 }
 
