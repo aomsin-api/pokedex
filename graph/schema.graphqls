@@ -2,27 +2,38 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
-
-type User {
+type Pokemon {
   id: ID!
   name: String!
+  description: String!
+  category: String!
+  abilities: []String!
+  type: [Type!]!
+}
+
+type Type {
+  typename: String!
 }
 
 type Query {
   todos: [Todo!]!
 }
 
-input NewTodo {
-  text: String!
-  userId: String!
+input PokemonInput {
+  name: String!
+  description: String!
+  category: String!
+  abilities: []String!
+}
+
+input TypeInput {
+  typename: String!
 }
 
 type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  createPokemon(input: PokemonInput!): Pokemon!
+  updatePokemon(input: PokemonInput!): Pokemon!
+  deletePokemon(id: ID!): Boolean!
+
+  addPokemonType()
 }

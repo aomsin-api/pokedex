@@ -14,35 +14,7 @@ type PokedexOp struct {
 	db *bun.DB
 }
 
-type Pokemon struct {
-	bun.BaseModel `bun:"table:pokemon"`
-
-	ID          int `bun:",pk,autoincrement"`
-	Name        string
-	Description string
-	Category    string
-	Abilities   []string
-	Types       []Type `bun:"m2m:pokemon_to_type,join:Pokemon=Type"`
-}
-
-type PokemonToType struct {
-	bun.BaseModel `bun:"table:pokemon_to_type"`
-
-	PokemonID int      `bun:",pk"`
-	Pokemon   *Pokemon `bun:"rel:belongs-to,join:pokemon_id=id"`
-	TypeID    int      `bun:",pk"`
-	Type      *Type    `bun:"rel:belongs-to,join:type_id=id"`
-}
-
-type Type struct {
-	bun.BaseModel `bun:"table:types"`
-
-	ID       int `bun:",pk,autoincrement"`
-	TypeName string
-	Pokemons []Pokemon `bun:"m2m:pokemon_to_type,join:Type=Pokemon"`
-}
-
-func Set() {
+func ReSet() {
 	ctx := context.Background()
 
 	sqldb, err := sql.Open(sqliteshim.ShimName, "pokedex.db")
@@ -59,51 +31,38 @@ func Set() {
 
 	db.RegisterModel((*PokemonToType)(nil))
 
-	if err := setSchema(ctx, db); err != nil {
+	if err := ResetSchema(ctx, db); err != nil {
 		panic(err)
 	}
 }
 
-func setSchema(ctx context.Context, db *bun.DB) error {
+func ResetSchema(ctx context.Context, db *bun.DB) error {
 	if err := db.ResetModel(ctx, (*Pokemon)(nil), (*PokemonToType)(nil), (*Type)(nil)); err != nil {
-		return err
-	}
-	pokemon := []Pokemon{
-		{
-			Name:        "Bulbasaur",
-			Description: "There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.",
-			Category:    "Seed",
-			Abilities:   []string{"Overgrow", "Hydropump"},
-		},
-		{
-			Name:        "Ivysaur",
-			Description: "When the bulb on its back grows large, it appears to lose the ability to stand on its hind legs.",
-			Category:    "Seed",
-			Abilities:   []string{"Overgrow", "Rock Throw"},
-		},
-	}
-	if _, err := db.NewInsert().Model(&pokemon).Exec(ctx); err != nil {
 		return err
 	}
 
 	pokemontype := []Type{
-		{TypeName: "GRASS"},
-		{TypeName: "DARK"},
-		{TypeName: "POISON"},
-		{TypeName: "FIRE"},
+		{TypeName: "Bug"},
+		{TypeName: "Dark"},
+		{TypeName: "Dragon"},
+		{TypeName: "Electric"},
+		{TypeName: "Fairy"},
+		{TypeName: "Fighting"},
+		{TypeName: "Fire"},
+		{TypeName: "Flying"},
+		{TypeName: "Ghost"},
+		{TypeName: "Gras"},
+		{TypeName: "Ground"},
+		{TypeName: "Ice"},
+		{TypeName: "Normal"},
+		{TypeName: "Poison"},
+		{TypeName: "Psychic"},
+		{TypeName: "Rock"},
+		{TypeName: "Steel"},
+		{TypeName: "Water"},
 	}
 
 	if _, err := db.NewInsert().Model(&pokemontype).Exec(ctx); err != nil {
-		return err
-	}
-
-	pokemontotype := []PokemonToType{
-		{PokemonID: 1, TypeID: 1},
-		{PokemonID: 1, TypeID: 3},
-		{PokemonID: 2, TypeID: 2},
-	}
-
-	if _, err := db.NewInsert().Model(&pokemontotype).Exec(ctx); err != nil {
 		return err
 	}
 
