@@ -1,4 +1,4 @@
-package main
+package graph
 
 import "github.com/uptrace/bun"
 
@@ -18,7 +18,7 @@ type PokemonToType struct {
 
 	PokemonID int      `bun:",pk"`
 	Pokemon   *Pokemon `bun:"rel:belongs-to,join:pokemon_id=id"`
-	TypeID    int      `bun:",pk"`
+	TypeName  string   `bun:",pk"`
 	Type      *Type    `bun:"rel:belongs-to,join:type_id=id"`
 }
 

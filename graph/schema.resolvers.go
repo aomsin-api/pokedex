@@ -10,11 +10,36 @@ import (
 	"pokedex/graph/model"
 )
 
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
+func (r *mutationResolver) CreatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
+	newPokemon := model.Pokemon{
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Abilities:   input.Abilities,
+		Type:        input.Abilities,
+	}
+
+	err := r.pokedex.CreatePokemon(ctx, &newPokemon)
+	if err != nil {
+		return nil, err
+	}
+
+	return &newPokemon, nil
+}
+
+func (r *mutationResolver) UpdatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
+func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Pokemon(ctx context.Context, id string) (*model.Pokemon, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Pokemons(ctx context.Context) ([]*model.Pokemon, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

@@ -1,4 +1,4 @@
-package main
+package graph
 
 import (
 	"context"
@@ -8,10 +8,13 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/uptrace/bun/extra/bundebug"
+
+	"pokedex/graph/model"
 )
 
 type PokedexOp struct {
 	db *bun.DB
+	// pokemon		[]*model.pokemon
 }
 
 func ReSet() {
@@ -69,9 +72,8 @@ func ResetSchema(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (op *PokedexOp) CreatePokemon(ctx context.Context, pokemon Pokemon) error {
-	newpokemon := []Pokemon{pokemon}
-	if _, err := op.db.NewInsert().Model(&newpokemon).Exec(ctx); err != nil {
+func (op *PokedexOp) CreatePokemon(ctx context.Context, pokemon *model.Pokemon) error {
+	if _, err := op.db.NewInsert().Model(&pokemon).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -101,16 +103,11 @@ func (op *PokedexOp) ListAll(ctx context.Context) ([]Pokemon, error) {
 		return nil, err
 	}
 
-	// for _, pokemon := range pokemons {
-	// 	fmt.Println(pokemon.Name)
-	// }
 	return pokemons, nil
 }
 
-func (op *PokedexOp) UpdatePokemon(ctx context.Context, id int, name string) error {
-	pokemon := &Pokemon{ID: id, Name: name}
-
-	_, err := op.db.NewUpdate().Model(pokemon).WherePK().Exec(ctx)
+func (op *PokedexOp) UpdatePokemon(ctx context.Context, pokemon *model.Pokemon) error {
+	_, err := op.db.NewUpdate().Model(&pokemon).WherePK().Exec(ctx)
 	if err != nil {
 		return err
 	}

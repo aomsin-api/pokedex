@@ -7,33 +7,26 @@ type Pokemon {
   name: String!
   description: String!
   category: String!
-  abilities: []String!
-  type: [Type!]!
-}
-
-type Type {
-  typename: String!
+  abilities: [String!]
+  type: [String!]
 }
 
 type Query {
-  todos: [Todo!]!
+  pokemon(id: ID!): Pokemon
+  pokemons: [Pokemon!]!
 }
 
 input PokemonInput {
+  id: ID
   name: String!
   description: String!
   category: String!
-  abilities: []String!
-}
-
-input TypeInput {
-  typename: String!
+  abilities: [String!]
+  type: [String!]
 }
 
 type Mutation {
   createPokemon(input: PokemonInput!): Pokemon!
   updatePokemon(input: PokemonInput!): Pokemon!
   deletePokemon(id: ID!): Boolean!
-
-  addPokemonType()
 }
