@@ -14,10 +14,9 @@ import (
 
 type PokedexOp struct {
 	db *bun.DB
-	// pokemon		[]*model.pokemon
 }
 
-func ReSet() {
+func Reset() {
 	ctx := context.Background()
 
 	sqldb, err := sql.Open(sqliteshim.ShimName, "pokedex.db")
@@ -32,75 +31,67 @@ func ReSet() {
 		bundebug.FromEnv("BUNDEBUG"),
 	))
 
-	db.RegisterModel((*PokemonToType)(nil))
-
 	if err := ResetSchema(ctx, db); err != nil {
 		panic(err)
 	}
 }
 
 func ResetSchema(ctx context.Context, db *bun.DB) error {
-	if err := db.ResetModel(ctx, (*Pokemon)(nil), (*PokemonToType)(nil), (*Type)(nil)); err != nil {
+	if err := db.ResetModel(ctx, (*model.Pokemon)(nil)); err != nil {
 		return err
 	}
-
-	pokemontype := []Type{
-		{TypeName: "Bug"},
-		{TypeName: "Dark"},
-		{TypeName: "Dragon"},
-		{TypeName: "Electric"},
-		{TypeName: "Fairy"},
-		{TypeName: "Fighting"},
-		{TypeName: "Fire"},
-		{TypeName: "Flying"},
-		{TypeName: "Ghost"},
-		{TypeName: "Gras"},
-		{TypeName: "Ground"},
-		{TypeName: "Ice"},
-		{TypeName: "Normal"},
-		{TypeName: "Poison"},
-		{TypeName: "Psychic"},
-		{TypeName: "Rock"},
-		{TypeName: "Steel"},
-		{TypeName: "Water"},
+	firstpokemon := []model.Pokemon{
+		{
+			Name:        "Charmander",
+			Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
+			Category:    "Lizard",
+			Abilities:   []string{"Blaze", "Flamethrower"},
+			Type:        []string{"Fire", "Normal"},
+		},
 	}
 
-	if _, err := db.NewInsert().Model(&pokemontype).Exec(ctx); err != nil {
+	if _, err := db.NewInsert().Model(&firstpokemon).Exec(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (op *PokedexOp) CreatePokemon(ctx context.Context, pokemon *model.Pokemon) error {
-
-	if _, err := op.db.NewInsert().Model(&pokemon).Exec(ctx); err != nil {
-		return err
+func (op *PokedexOp) CreatePokemon(ctx context.Context, input *model.PokemonInput) (*model.Pokemon, error) {
+	newPokemon := model.Pokemon{
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    input.Category,
+		Abilities:   input.Abilities,
+		Type:        input.Type,
 	}
-	return nil
+	if _, err := op.db.NewInsert().Model(&newPokemon).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return &newPokemon, nil
 }
 
 func (op *PokedexOp) SearchByID(ctx context.Context, id string) (*model.Pokemon, error) {
 	pokemons := new(*model.Pokemon)
-	if err := op.db.NewSelect().Model(pokemons).Relation("Types").Where("id = ? ", id).Scan(ctx); err != nil {
+	if err := op.db.NewSelect().Model(pokemons).Where("id = ? ", id).Scan(ctx); err != nil {
 		return nil, err
 	}
 
 	return *pokemons, nil
 }
 
-func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*Pokemon, error) {
-	pokemons := new(Pokemon)
+func (op *PokedexOp) SearchByName(ctx context.Context, name string) (*model.Pokemon, error) {
+	pokemons := new(*model.Pokemon)
 	if err := op.db.NewSelect().Model(pokemons).Relation("Types").Where("name LIKE ? ", name).Scan(ctx); err != nil {
 		return nil, err
 	}
 
-	return pokemons, nil
+	return *pokemons, nil
 }
 
 func (op *PokedexOp) ListAll(ctx context.Context) ([]*model.Pokemon, error) {
-	pokemons := make([]*model.Pokemon, 0, 4)
-	if err := op.db.NewSelect().Model(&pokemons).Column("name").OrderExpr("id ASC").Scan(ctx); err != nil {
+	pokemons := make([]*model.Pokemon, 0)
+	if err := op.db.NewSelect().Model(pokemons).OrderExpr("id ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
 

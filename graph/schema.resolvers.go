@@ -11,20 +11,12 @@ import (
 )
 
 func (r *mutationResolver) CreatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
-	newPokemon := model.Pokemon{
-		Name:        input.Name,
-		Description: input.Description,
-		Category:    input.Category,
-		Abilities:   input.Abilities,
-		Type:        input.Abilities,
-	}
-
-	err := r.pokedex.CreatePokemon(ctx, &newPokemon)
+	newPokemon, err := r.pokedex.CreatePokemon(ctx, &input)
 	if err != nil {
 		return nil, err
 	}
 
-	return &newPokemon, nil
+	return newPokemon, nil
 }
 
 func (r *mutationResolver) UpdatePokemon(ctx context.Context, input model.PokemonInput) (*model.Pokemon, error) {
@@ -57,8 +49,12 @@ func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, 
 	return true, nil
 }
 
-func (r *queryResolver) Pokemon(ctx context.Context, id string) (*model.Pokemon, error) {
+func (r *queryResolver) Pokemonbyid(ctx context.Context, id string) (*model.Pokemon, error) {
 	return r.pokedex.SearchByID(ctx, id)
+}
+
+func (r *queryResolver) Pokemonbyname(ctx context.Context, name string) (*model.Pokemon, error) {
+	return r.pokedex.SearchByName(ctx, name)
 }
 
 func (r *queryResolver) Pokemons(ctx context.Context) ([]*model.Pokemon, error) {
