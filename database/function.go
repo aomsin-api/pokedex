@@ -7,9 +7,8 @@ import (
 	"pokedex/graph/gqlmodel"
 
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
-	"github.com/uptrace/bun/extra/bundebug"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type PokedexOp struct {
@@ -17,18 +16,16 @@ type PokedexOp struct {
 }
 
 func PokedexInit() (*bun.DB, error) {
-	sqlDB, err := sql.Open(sqliteshim.ShimName, "pokedex.db")
-	if err != nil {
+	ctx := context.Background()
+	dsn := "postgres://postgres:1234@localhost:5000/postgres?sslmode=disable"
+
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	if _, err := db.NewCreateTable().Model((*Pokemon)(nil)).IfNotExists().Exec(ctx); err != nil {
 		return nil, err
 	}
-
-	db := bun.NewDB(sqlDB, sqlitedialect.New())
-
-	db.AddQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(true),
-		bundebug.FromEnv("BUNDEBUG"),
-	))
-
 	return db, nil
 }
 

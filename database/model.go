@@ -8,8 +8,8 @@ type Pokemon struct {
 	Name          string
 	Description   string
 	Category      string
-	Abilities     []string
-	Type          []string
+	Abilities     []string `bun:",array"`
+	Type          []string `bun:",array"`
 }
 
 type CreatePokemonInput struct {
