@@ -12,6 +12,10 @@ import (
 )
 
 func (r *mutationResolver) CreatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error) {
+	err := database.CheckInput(input)
+	if err != nil {
+		return nil, err
+	}
 	newpokemon, err := r.Pokedex.CreatePokemon(ctx, &database.CreatePokemonInput{
 		Name:        input.Name,
 		Description: input.Description,
@@ -30,7 +34,7 @@ func (r *mutationResolver) UpdatePokemon(ctx context.Context, input gqlmodel.Pok
 	if input.ID == nil {
 		return nil, fmt.Errorf("id must not be null")
 	}
-	pokemon, err := r.Pokedex.UpdatePokemon(ctx, &database.UpdatePokemonInput{
+	pokemon, err := r.Pokedex.UpdatePokemon(ctx, input.ID, &database.UpdatePokemonInput{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    input.Category,

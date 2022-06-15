@@ -4,9 +4,9 @@ package gqlmodel
 
 type PokemonInput struct {
 	ID          *string  `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Category    string   `json:"category"`
+	Name        *string  `json:"name"`
+	Description *string  `json:"description"`
+	Category    *string  `json:"category"`
 	Abilities   []string `json:"abilities"`
 	Type        []string `json:"type"`
 }

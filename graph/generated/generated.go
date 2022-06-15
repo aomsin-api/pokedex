@@ -292,9 +292,9 @@ type Query {
 
 input PokemonInput {
   id: ID
-  name: String!
-  description: String!
-  category: String!
+  name: String
+  description: String
+  category: String
   abilities: [String!]
   type: [String!]
 }
@@ -3003,7 +3003,7 @@ func (ec *executionContext) unmarshalInputPokemonInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3011,7 +3011,7 @@ func (ec *executionContext) unmarshalInputPokemonInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3019,7 +3019,7 @@ func (ec *executionContext) unmarshalInputPokemonInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
-			it.Category, err = ec.unmarshalNString2string(ctx, v)
+			it.Category, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

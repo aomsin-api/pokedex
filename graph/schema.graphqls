@@ -19,9 +19,9 @@ type Query {
 
 input PokemonInput {
   id: ID
-  name: String!
-  description: String!
-  category: String!
+  name: String
+  description: String
+  category: String
   abilities: [String!]
   type: [String!]
 }

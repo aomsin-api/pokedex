@@ -13,18 +13,18 @@ type Pokemon struct {
 }
 
 type CreatePokemonInput struct {
-	Name        string
-	Description string
-	Category    string
+	Name        *string
+	Description *string
+	Category    *string
 	Abilities   []string
 	Type        []string
 }
 
 type UpdatePokemonInput struct {
 	ID          int
-	Name        string
-	Description string
-	Category    string
+	Name        *string
+	Description *string
+	Category    *string
 	Abilities   []string
 	Type        []string
 }
