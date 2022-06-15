@@ -12,7 +12,7 @@ import (
 )
 
 func (r *mutationResolver) CreatePokemon(ctx context.Context, input gqlmodel.PokemonInput) (*database.Pokemon, error) {
-	newpokemon, err := r.pokedex.CreatePokemon(ctx, &database.CreatePokemonInput{
+	newpokemon, err := r.Pokedex.CreatePokemon(ctx, &database.CreatePokemonInput{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    input.Category,
@@ -30,7 +30,7 @@ func (r *mutationResolver) UpdatePokemon(ctx context.Context, input gqlmodel.Pok
 	if input.ID == nil {
 		return nil, fmt.Errorf("id must not be null")
 	}
-	pokemon, err := r.pokedex.UpdatePokemon(ctx, &database.UpdatePokemonInput{
+	pokemon, err := r.Pokedex.UpdatePokemon(ctx, &database.UpdatePokemonInput{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    input.Category,
@@ -45,7 +45,7 @@ func (r *mutationResolver) UpdatePokemon(ctx context.Context, input gqlmodel.Pok
 }
 
 func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, error) {
-	err := r.pokedex.DeletePokemon(ctx, id)
+	err := r.Pokedex.DeletePokemon(ctx, id)
 	if err != nil {
 		return false, err
 	}
@@ -54,15 +54,15 @@ func (r *mutationResolver) DeletePokemon(ctx context.Context, id string) (bool, 
 }
 
 func (r *queryResolver) SearchPokemonByID(ctx context.Context, id string) (*database.Pokemon, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Pokedex.SearchByID(ctx, id)
 }
 
 func (r *queryResolver) SearchPokemonByName(ctx context.Context, name string) (*database.Pokemon, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Pokedex.SearchByName(ctx, name)
 }
 
 func (r *queryResolver) Pokemons(ctx context.Context) ([]*database.Pokemon, error) {
-	return r.pokedex.ListAll(ctx)
+	return r.Pokedex.ListAll(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.
