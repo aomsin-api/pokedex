@@ -15,11 +15,10 @@ type PokedexOp struct {
 	Db *bun.DB
 }
 
-func PokedexInit() (*bun.DB, error) {
+func PokedexInit(dsn *string) (*bun.DB, error) {
 	ctx := context.Background()
-	dsn := "postgres://postgres:1234@localhost:5000/postgres?sslmode=disable"
 
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(*dsn)))
 
 	db := bun.NewDB(sqldb, pgdialect.New())
 

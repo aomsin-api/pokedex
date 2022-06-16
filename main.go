@@ -12,15 +12,18 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 )
 
-const defaultPort = "5432"
+const defaultPort = "8080"
 
 func main() {
+	arg := os.Args[1]
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-	db, _ := database.PokedexInit()
-
+	db, err := database.PokedexInit(&arg)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
 			generated.Config{
